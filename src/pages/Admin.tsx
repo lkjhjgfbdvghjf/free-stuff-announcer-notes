@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -9,10 +8,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Package, Megaphone, StickyNote, Trash2, Edit2, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, Package, Megaphone, StickyNote, Trash2, Edit2, Eye, EyeOff, Settings } from 'lucide-react';
 import AdminLogin from '@/components/AdminLogin';
 import ItemForm from '@/components/ItemForm';
 import AdminNotes from '@/components/AdminNotes';
+import CategoryManager from '@/components/CategoryManager';
 import { FreeItem, AdminNote, Announcement } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 
@@ -21,6 +21,15 @@ const Admin = () => {
   const [items, setItems] = useState<FreeItem[]>([]);
   const [notes, setNotes] = useState<AdminNote[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [categories, setCategories] = useState<string[]>([
+    'เสื้อผ้า',
+    'อิเล็กทรอนิกส์',
+    'หนังสือ',
+    'ของใช้ในบ้าน',
+    'ของเล่น',
+    'อาหาร',
+    'อื่นๆ'
+  ]);
   const [newAnnouncement, setNewAnnouncement] = useState({ title: '', content: '' });
   const { toast } = useToast();
 
@@ -29,15 +38,22 @@ const Admin = () => {
     const savedItems = localStorage.getItem('freeItems');
     const savedNotes = localStorage.getItem('adminNotes');
     const savedAnnouncements = localStorage.getItem('announcements');
+    const savedCategories = localStorage.getItem('categories');
     
     if (savedItems) setItems(JSON.parse(savedItems));
     if (savedNotes) setNotes(JSON.parse(savedNotes));
     if (savedAnnouncements) setAnnouncements(JSON.parse(savedAnnouncements));
+    if (savedCategories) setCategories(JSON.parse(savedCategories));
   }, []);
 
   // Save data to localStorage
   const saveToStorage = (key: string, data: any) => {
     localStorage.setItem(key, JSON.stringify(data));
+  };
+
+  const handleUpdateCategories = (newCategories: string[]) => {
+    setCategories(newCategories);
+    saveToStorage('categories', newCategories);
   };
 
   const handleAddItem = (itemData: Omit<FreeItem, 'id' | 'dateAdded'>) => {
@@ -165,7 +181,7 @@ const Admin = () => {
               </Link>
               <div>
                 <h1 className="text-2xl font-bold text-gray-800">ระบบจัดการแอดมิน</h1>
-                <p className="text-sm text-gray-600">จัดการของแจก ประกาศ และโน๊ตส่วนตัว</p>
+                <p className="text-sm text-gray-600">จัดการของแจก ประกาศ หมวดหมู่ และโน๊ตส่วนตัว</p>
               </div>
             </div>
             <Button 
@@ -181,7 +197,7 @@ const Admin = () => {
 
       <main className="container mx-auto px-4 py-8">
         <Tabs defaultValue="items" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="items" className="flex items-center gap-2">
               <Package className="w-4 h-4" />
               จัดการของแจก
@@ -189,6 +205,10 @@ const Admin = () => {
             <TabsTrigger value="announcements" className="flex items-center gap-2">
               <Megaphone className="w-4 h-4" />
               ประกาศ
+            </TabsTrigger>
+            <TabsTrigger value="categories" className="flex items-center gap-2">
+              <Settings className="w-4 h-4" />
+              หมวดหมู่
             </TabsTrigger>
             <TabsTrigger value="notes" className="flex items-center gap-2">
               <StickyNote className="w-4 h-4" />
@@ -199,7 +219,7 @@ const Admin = () => {
           {/* Items Management */}
           <TabsContent value="items" className="space-y-6">
             <div className="grid lg:grid-cols-2 gap-6">
-              <ItemForm onAddItem={handleAddItem} />
+              <ItemForm onAddItem={handleAddItem} categories={categories} />
               
               <Card>
                 <CardHeader>
@@ -369,6 +389,14 @@ const Admin = () => {
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+          {/* Category Management */}
+          <TabsContent value="categories">
+            <CategoryManager 
+              categories={categories}
+              onUpdateCategories={handleUpdateCategories}
+            />
           </TabsContent>
 
           {/* Admin Notes */}

@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -11,9 +11,10 @@ import { FreeItem } from '@/types';
 
 interface ItemFormProps {
   onAddItem: (item: Omit<FreeItem, 'id' | 'dateAdded'>) => void;
+  categories?: string[];
 }
 
-const ItemForm = ({ onAddItem }: ItemFormProps) => {
+const ItemForm = ({ onAddItem, categories }: ItemFormProps) => {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -24,7 +25,7 @@ const ItemForm = ({ onAddItem }: ItemFormProps) => {
     imageUrl: ''
   });
 
-  const categories = [
+  const [availableCategories, setAvailableCategories] = useState<string[]>([
     'เสื้อผ้า',
     'อิเล็กทรอนิกส์',
     'หนังสือ',
@@ -32,7 +33,19 @@ const ItemForm = ({ onAddItem }: ItemFormProps) => {
     'ของเล่น',
     'อาหาร',
     'อื่นๆ'
-  ];
+  ]);
+
+  // Load categories from localStorage or use provided categories
+  useEffect(() => {
+    if (categories) {
+      setAvailableCategories(categories);
+    } else {
+      const savedCategories = localStorage.getItem('categories');
+      if (savedCategories) {
+        setAvailableCategories(JSON.parse(savedCategories));
+      }
+    }
+  }, [categories]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,7 +78,7 @@ const ItemForm = ({ onAddItem }: ItemFormProps) => {
           <CardTitle className="text-lg">เพิ่มของแจกใหม่</CardTitle>
         </div>
         <CardDescription>
-          เพิ่มข้อมูลของที่ต้องการแจกให้คนทั่วไป
+          เพิ่มข้อมูลของที่ต้องการแจกให้คนทั่วไป (สามารถใส่ลิงก์ในรายละเอียดได้)
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -91,7 +104,7 @@ const ItemForm = ({ onAddItem }: ItemFormProps) => {
                   <SelectValue placeholder="เลือกหมวดหมู่" />
                 </SelectTrigger>
                 <SelectContent>
-                  {categories.map((category) => (
+                  {availableCategories.map((category) => (
                     <SelectItem key={category} value={category}>
                       {category}
                     </SelectItem>
@@ -107,7 +120,7 @@ const ItemForm = ({ onAddItem }: ItemFormProps) => {
               id="description"
               value={formData.description}
               onChange={(e) => setFormData({...formData, description: e.target.value})}
-              placeholder="อธิบายรายละเอียดของสิ่งของ สภาพ ขนาด ฯลฯ"
+              placeholder="อธิบายรายละเอียดของสิ่งของ สภาพ ขนาด หรือใส่ลิงก์รูปภาพ ฯลฯ"
               className="min-h-[80px]"
               required
             />
@@ -141,7 +154,7 @@ const ItemForm = ({ onAddItem }: ItemFormProps) => {
               id="contact"
               value={formData.contactInfo}
               onChange={(e) => setFormData({...formData, contactInfo: e.target.value})}
-              placeholder="เช่น เบอร์โทร, LINE ID, Facebook"
+              placeholder="เช่น เบอร์โทร, LINE ID, Facebook หรือลิงก์ติดต่อ"
             />
           </div>
 
