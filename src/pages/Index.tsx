@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -62,8 +63,6 @@ const Index = () => {
           description: 'เสื้อเชิ้ตสีขาวแบรนด์ดัง สภาพดีมาก ใส่แค่ 2-3 ครั้ง เหมาะสำหรับไปทำงาน',
           category: 'เสื้อผ้า',
           quantity: 1,
-          contactInfo: 'LINE: @freeshirt',
-          location: 'กรุงเทพมหานคร',
           dateAdded: new Date().toISOString(),
           isActive: true
         },
@@ -73,8 +72,6 @@ const Index = () => {
           description: 'หนังสือเรียนคณิตศาสตร์ระดับมัธยมศึกษาปีที่ 3 สภาพดี มีเขียนบางหน้า',
           category: 'หนังสือ',
           quantity: 3,
-          contactInfo: 'Tel: 098-xxx-xxxx',
-          location: 'นนทบุรี',
           dateAdded: new Date(Date.now() - 86400000).toISOString(),
           isActive: true
         }
@@ -124,7 +121,6 @@ const Index = () => {
                 </div>
                 <div>
                   <h1 className="text-lg font-bold text-gray-800 dark:text-gray-100">ระบบแจกของฟรี</h1>
-                  <p className="text-xs text-gray-600 dark:text-gray-300">แบ่งปันสิ่งดีๆ ให้กับทุกคน</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -208,9 +204,6 @@ const Index = () => {
               <Gift className="w-5 h-5" />
               <span className="font-semibold text-sm">ระบบแจกของฟรี</span>
             </div>
-            <p className="text-xs text-gray-300">
-              แบ่งปันความดี สร้างสังคมที่ยั่งยืน
-            </p>
           </div>
         </footer>
       </div>
