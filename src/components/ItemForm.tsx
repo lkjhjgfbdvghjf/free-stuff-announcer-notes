@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -71,13 +70,13 @@ const ItemForm = ({ onAddItem, categories }: ItemFormProps) => {
   };
 
   return (
-    <Card>
+    <Card className="dark:bg-gray-800">
       <CardHeader>
         <div className="flex items-center gap-2">
-          <Package className="w-5 h-5 text-green-600" />
-          <CardTitle className="text-lg">เพิ่มของแจกใหม่</CardTitle>
+          <Package className="w-5 h-5 text-green-600 dark:text-green-400" />
+          <CardTitle className="text-lg dark:text-gray-100">เพิ่มของแจกใหม่</CardTitle>
         </div>
-        <CardDescription>
+        <CardDescription className="dark:text-gray-300">
           เพิ่มข้อมูลของที่ต้องการแจกให้คนทั่วไป (สามารถใส่ลิงก์ในรายละเอียดได้)
         </CardDescription>
       </CardHeader>
@@ -85,22 +84,23 @@ const ItemForm = ({ onAddItem, categories }: ItemFormProps) => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="title">ชื่อสิ่งของ *</Label>
+              <Label htmlFor="title" className="dark:text-gray-200">ชื่อสิ่งของ *</Label>
               <Input
                 id="title"
                 value={formData.title}
                 onChange={(e) => setFormData({...formData, title: e.target.value})}
                 placeholder="เช่น เสื้อเชิ้ตสีขาว"
+                className="dark:bg-gray-700 dark:text-gray-100"
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="category">หมวดหมู่ *</Label>
+              <Label htmlFor="category" className="dark:text-gray-200">หมวดหมู่ *</Label>
               <Select 
                 value={formData.category} 
                 onValueChange={(value) => setFormData({...formData, category: value})}
               >
-                <SelectTrigger>
+                <SelectTrigger className="dark:bg-gray-700 dark:text-gray-100">
                   <SelectValue placeholder="เลือกหมวดหมู่" />
                 </SelectTrigger>
                 <SelectContent>
@@ -115,50 +115,30 @@ const ItemForm = ({ onAddItem, categories }: ItemFormProps) => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description">รายละเอียด *</Label>
+            <Label htmlFor="description" className="dark:text-gray-200">รายละเอียด *</Label>
             <Textarea
               id="description"
               value={formData.description}
               onChange={(e) => setFormData({...formData, description: e.target.value})}
               placeholder="อธิบายรายละเอียดของสิ่งของ สภาพ ขนาด หรือใส่ลิงก์รูปภาพ ฯลฯ"
-              className="min-h-[80px]"
+              className="min-h-[80px] dark:bg-gray-700 dark:text-gray-100"
               required
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="quantity">จำนวน</Label>
-              <Input
-                id="quantity"
-                type="number"
-                min="1"
-                value={formData.quantity}
-                onChange={(e) => setFormData({...formData, quantity: parseInt(e.target.value) || 1})}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="location">สถานที่</Label>
-              <Input
-                id="location"
-                value={formData.location}
-                onChange={(e) => setFormData({...formData, location: e.target.value})}
-                placeholder="เช่น กรุงเทพมหานคร"
-              />
-            </div>
-          </div>
-
           <div className="space-y-2">
-            <Label htmlFor="contact">ข้อมูลติดต่อ</Label>
+            <Label htmlFor="quantity" className="dark:text-gray-200">จำนวน</Label>
             <Input
-              id="contact"
-              value={formData.contactInfo}
-              onChange={(e) => setFormData({...formData, contactInfo: e.target.value})}
-              placeholder="เช่น เบอร์โทร, LINE ID, Facebook หรือลิงก์ติดต่อ"
+              id="quantity"
+              type="number"
+              min="1"
+              value={formData.quantity}
+              onChange={(e) => setFormData({...formData, quantity: parseInt(e.target.value) || 1})}
+              className="dark:bg-gray-700 dark:text-gray-100"
             />
           </div>
 
-          <Button type="submit" className="w-full bg-green-600 hover:bg-green-700">
+          <Button type="submit" className="w-full bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600">
             <Plus className="w-4 h-4 mr-2" />
             เพิ่มของแจก
           </Button>
