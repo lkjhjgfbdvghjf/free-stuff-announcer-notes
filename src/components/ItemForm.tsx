@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -5,7 +6,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Package } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Plus, Package, Upload, Link } from 'lucide-react';
 import { FreeItem } from '@/types';
 
 interface ItemFormProps {
@@ -19,8 +21,6 @@ const ItemForm = ({ onAddItem, categories }: ItemFormProps) => {
     description: '',
     category: '',
     quantity: 1,
-    contactInfo: '',
-    location: '',
     imageUrl: ''
   });
 
@@ -34,17 +34,56 @@ const ItemForm = ({ onAddItem, categories }: ItemFormProps) => {
     'อื่นๆ'
   ]);
 
-  // Load categories from localStorage or use provided categories
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>('');
+  const [imageMode, setImageMode] = useState<'upload' | 'url'>('upload');
+
+  // Update categories when props change
   useEffect(() => {
-    if (categories) {
+    if (categories && categories.length > 0) {
       setAvailableCategories(categories);
     } else {
+      // Load from localStorage if no props provided
       const savedCategories = localStorage.getItem('categories');
       if (savedCategories) {
-        setAvailableCategories(JSON.parse(savedCategories));
+        const parsedCategories = JSON.parse(savedCategories);
+        setAvailableCategories(parsedCategories);
       }
     }
   }, [categories]);
+
+  // Listen for localStorage changes to update categories in real-time
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const savedCategories = localStorage.getItem('categories');
+      if (savedCategories) {
+        const parsedCategories = JSON.parse(savedCategories);
+        setAvailableCategories(parsedCategories);
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        setImagePreview(result);
+        setFormData({...formData, imageUrl: result});
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleUrlChange = (url: string) => {
+    setFormData({...formData, imageUrl: url});
+    setImagePreview(url);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,15 +97,20 @@ const ItemForm = ({ onAddItem, categories }: ItemFormProps) => {
       isActive: true
     });
 
+    // Reset form
     setFormData({
       title: '',
       description: '',
       category: '',
       quantity: 1,
-      contactInfo: '',
-      location: '',
       imageUrl: ''
     });
+    setImageFile(null);
+    setImagePreview('');
+    
+    // Reset file input
+    const fileInput = document.getElementById('image-upload') as HTMLInputElement;
+    if (fileInput) fileInput.value = '';
   };
 
   return (
@@ -77,7 +121,7 @@ const ItemForm = ({ onAddItem, categories }: ItemFormProps) => {
           <CardTitle className="text-lg dark:text-gray-100">เพิ่มของแจกใหม่</CardTitle>
         </div>
         <CardDescription className="dark:text-gray-300">
-          เพิ่มข้อมูลของที่ต้องการแจกให้คนทั่วไป (สามารถใส่ลิงก์ในรายละเอียดได้)
+          เพิ่มข้อมูลของที่ต้องการแจกให้คนทั่วไป
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -120,7 +164,7 @@ const ItemForm = ({ onAddItem, categories }: ItemFormProps) => {
               id="description"
               value={formData.description}
               onChange={(e) => setFormData({...formData, description: e.target.value})}
-              placeholder="อธิบายรายละเอียดของสิ่งของ สภาพ ขนาด หรือใส่ลิงก์รูปภาพ ฯลฯ"
+              placeholder="อธิบายรายละเอียดของสิ่งของ สภาพ ขนาด ฯลฯ"
               className="min-h-[80px] dark:bg-gray-700 dark:text-gray-100"
               required
             />
@@ -136,6 +180,53 @@ const ItemForm = ({ onAddItem, categories }: ItemFormProps) => {
               onChange={(e) => setFormData({...formData, quantity: parseInt(e.target.value) || 1})}
               className="dark:bg-gray-700 dark:text-gray-100"
             />
+          </div>
+
+          {/* Image Upload Section */}
+          <div className="space-y-3">
+            <Label className="dark:text-gray-200">รูปภาพสินค้า</Label>
+            <Tabs value={imageMode} onValueChange={(value) => setImageMode(value as 'upload' | 'url')} className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="upload" className="flex items-center gap-1">
+                  <Upload className="w-3 h-3" />
+                  อัปโหลด
+                </TabsTrigger>
+                <TabsTrigger value="url" className="flex items-center gap-1">
+                  <Link className="w-3 h-3" />
+                  ลิงก์
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="upload" className="space-y-2">
+                <Input
+                  id="image-upload"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="dark:bg-gray-700 dark:text-gray-100"
+                />
+              </TabsContent>
+              
+              <TabsContent value="url" className="space-y-2">
+                <Input
+                  placeholder="ใส่ลิงก์รูปภาพ"
+                  value={imageMode === 'url' ? formData.imageUrl : ''}
+                  onChange={(e) => handleUrlChange(e.target.value)}
+                  className="dark:bg-gray-700 dark:text-gray-100"
+                />
+              </TabsContent>
+            </Tabs>
+
+            {/* Image Preview */}
+            {imagePreview && (
+              <div className="mt-3">
+                <img 
+                  src={imagePreview} 
+                  alt="ตัวอย่างรูปภาพ" 
+                  className="w-full max-w-xs h-32 object-cover rounded-lg border dark:border-gray-600"
+                />
+              </div>
+            )}
           </div>
 
           <Button type="submit" className="w-full bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600">

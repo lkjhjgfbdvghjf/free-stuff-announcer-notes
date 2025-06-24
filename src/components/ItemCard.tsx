@@ -37,6 +37,20 @@ const ItemCard = ({ item }: ItemCardProps) => {
 
   return (
     <Card className="h-full hover:shadow-lg transition-shadow duration-300 border-l-4 border-l-green-500 dark:border-l-green-400 dark:bg-gray-800">
+      {/* Image Section */}
+      {item.imageUrl && (
+        <div className="relative h-48 overflow-hidden rounded-t-lg">
+          <img 
+            src={item.imageUrl} 
+            alt={item.title}
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              e.currentTarget.style.display = 'none';
+            }}
+          />
+        </div>
+      )}
+      
       <CardHeader className="pb-3">
         <div className="flex justify-between items-start mb-2">
           <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 text-xs">
