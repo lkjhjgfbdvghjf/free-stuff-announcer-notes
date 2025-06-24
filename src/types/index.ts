@@ -1,4 +1,3 @@
-
 export interface FreeItem {
   id: string;
   title: string;
@@ -6,8 +5,6 @@ export interface FreeItem {
   imageUrl?: string;
   category: string;
   quantity: number;
-  contactInfo: string;
-  location: string;
   dateAdded: string;
   isActive: boolean;
 }
