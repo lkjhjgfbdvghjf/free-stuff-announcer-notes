@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -20,7 +19,8 @@ const AdminLogin = ({ onLogin }: AdminLoginProps) => {
     e.preventDefault();
     
     // Simple admin login - in real app, this would be secure authentication
-    if (username === 'admin' && password === 'admin123') {
+    if (username === 'raze' && password === '11223344') {
+      localStorage.setItem('isAdmin', 'true');
       onLogin();
       toast({
         title: "เข้าสู่ระบบสำเร็จ",
@@ -85,11 +85,6 @@ const AdminLogin = ({ onLogin }: AdminLoginProps) => {
               เข้าสู่ระบบ
             </Button>
           </form>
-          <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-            <p className="text-xs text-gray-600 text-center">
-              สำหรับทดสอบ: admin / admin123
-            </p>
-          </div>
         </CardContent>
       </Card>
     </div>

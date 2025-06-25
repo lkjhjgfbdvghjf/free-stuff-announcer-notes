@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -56,9 +55,7 @@ const ItemCard = ({ item }: ItemCardProps) => {
           <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 text-xs">
             {item.category}
           </Badge>
-          <Badge variant="outline" className="text-xs dark:border-gray-600 dark:text-gray-300">
-            เหลือ {item.quantity} ชิ้น
-          </Badge>
+          {/* ลบ badge แสดงจำนวนสินค้าออก */}
         </div>
         <CardTitle className="text-base font-bold text-gray-800 dark:text-gray-100 line-clamp-2">
           {item.title}

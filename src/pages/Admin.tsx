@@ -13,6 +13,7 @@ import AdminLogin from '@/components/AdminLogin';
 import ItemForm from '@/components/ItemForm';
 import AdminNotes from '@/components/AdminNotes';
 import CategoryManager from '@/components/CategoryManager';
+import AdminSettingsTab from '@/components/AdminSettingsTab';
 import { FreeItem, AdminNote, Announcement } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 
@@ -31,7 +32,87 @@ const Admin = () => {
     'อื่นๆ'
   ]);
   const [newAnnouncement, setNewAnnouncement] = useState({ title: '', content: '' });
+  const [adminButtons, setAdminButtons] = useState<{
+    id: string;
+    label: string;
+    url: string;
+    icon: string;
+  }[]>([]);
   const { toast } = useToast();
+
+  // Firebase base URL
+  const FIREBASE_URL = 'https://kovfs-a8152-default-rtdb.firebaseio.com';
+
+  // ดึงข้อมูลจาก Firebase แทน localStorage
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const itemsRes = await fetch(`${FIREBASE_URL}/items.json`);
+        const itemsData = await itemsRes.json();
+        const notesRes = await fetch(`${FIREBASE_URL}/adminNotes.json`);
+        const notesData = await notesRes.json();
+        const annRes = await fetch(`${FIREBASE_URL}/announcements.json`);
+        const annData = await annRes.json();
+        const catRes = await fetch(`${FIREBASE_URL}/categories.json`);
+        const catData = await catRes.json();
+
+        const itemsArray: FreeItem[] = itemsData ? Object.values(itemsData) : [];
+        setItems(itemsArray);
+
+        const notesArray: AdminNote[] = notesData ? Object.values(notesData) : [];
+        setNotes(notesArray);
+
+        const annArray: Announcement[] = annData ? Object.values(annData) : [];
+        setAnnouncements(annArray);
+
+        setCategories(catData || categories);
+      } catch (err) {
+        setItems([]);
+        setNotes([]);
+        setAnnouncements([]);
+        setCategories(categories);
+      }
+    };
+    fetchData();
+    // eslint-disable-next-line
+  }, []);
+
+  // ฟังก์ชันบันทึกข้อมูลไป Firebase
+  const saveItemsToFirebase = async (newItems: FreeItem[]) => {
+    await fetch(`${FIREBASE_URL}/items.json`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newItems.reduce((acc, item) => ({ ...acc, [item.id]: item }), {})),
+    });
+  };
+  const saveNotesToFirebase = async (newNotes: AdminNote[]) => {
+    await fetch(`${FIREBASE_URL}/adminNotes.json`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newNotes.reduce((acc, item) => ({ ...acc, [item.id]: item }), {})),
+    });
+  };
+  const saveAnnouncementsToFirebase = async (newAnnouncements: Announcement[]) => {
+    await fetch(`${FIREBASE_URL}/announcements.json`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newAnnouncements.reduce((acc, item) => ({ ...acc, [item.id]: item }), {})),
+    });
+  };
+  const saveCategoriesToFirebase = async (newCategories: string[]) => {
+    await fetch(`${FIREBASE_URL}/categories.json`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newCategories),
+    });
+  };
+  const saveAdminButtonsToFirebase = async (buttons: typeof adminButtons) => {
+    await fetch(`${FIREBASE_URL}/adminButtons.json`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(buttons.reduce((acc, b) => ({ ...acc, [b.id]: b }), {})),
+    });
+  };
 
   // Load data from localStorage
   useEffect(() => {
@@ -53,7 +134,7 @@ const Admin = () => {
 
   const handleUpdateCategories = (newCategories: string[]) => {
     setCategories(newCategories);
-    saveToStorage('categories', newCategories);
+    saveCategoriesToFirebase(newCategories);
   };
 
   const handleAddItem = (itemData: Omit<FreeItem, 'id' | 'dateAdded'>) => {
@@ -62,11 +143,9 @@ const Admin = () => {
       id: Date.now().toString(),
       dateAdded: new Date().toISOString()
     };
-    
     const updatedItems = [...items, newItem];
     setItems(updatedItems);
-    saveToStorage('freeItems', updatedItems);
-    
+    saveItemsToFirebase(updatedItems);
     toast({
       title: "เพิ่มของแจกสำเร็จ",
       description: "ข้อมูลได้ถูกบันทึกแล้ว",
@@ -78,14 +157,13 @@ const Admin = () => {
       item.id === id ? { ...item, isActive: !item.isActive } : item
     );
     setItems(updatedItems);
-    saveToStorage('freeItems', updatedItems);
+    saveItemsToFirebase(updatedItems);
   };
 
   const handleDeleteItem = (id: string) => {
     const updatedItems = items.filter(item => item.id !== id);
     setItems(updatedItems);
-    saveToStorage('freeItems', updatedItems);
-    
+    saveItemsToFirebase(updatedItems);
     toast({
       title: "ลบข้อมูลสำเร็จ",
       description: "ข้อมูลได้ถูกลบแล้ว",
@@ -99,10 +177,9 @@ const Admin = () => {
       dateCreated: new Date().toISOString(),
       dateUpdated: new Date().toISOString()
     };
-    
     const updatedNotes = [...notes, newNote];
     setNotes(updatedNotes);
-    saveToStorage('adminNotes', updatedNotes);
+    saveNotesToFirebase(updatedNotes);
   };
 
   const handleUpdateNote = (id: string, content: string) => {
@@ -110,33 +187,30 @@ const Admin = () => {
       note.id === id ? { ...note, content, dateUpdated: new Date().toISOString() } : note
     );
     setNotes(updatedNotes);
-    saveToStorage('adminNotes', updatedNotes);
+    saveNotesToFirebase(updatedNotes);
   };
 
   const handleDeleteNote = (id: string) => {
     const updatedNotes = notes.filter(note => note.id !== id);
     setNotes(updatedNotes);
-    saveToStorage('adminNotes', updatedNotes);
+    saveNotesToFirebase(updatedNotes);
   };
 
   const handleAddAnnouncement = () => {
-    if (!newAnnouncement.title.trim() || !newAnnouncement.content.trim()) {
+    if (!newAnnouncement.content.trim()) {
       return;
     }
-
     const announcement: Announcement = {
       id: Date.now().toString(),
-      title: newAnnouncement.title.trim(),
+      title: 'ประกาศ', // ล็อกหัวข้อเป็น 'ประกาศ' เสมอ
       content: newAnnouncement.content.trim(),
       isActive: true,
       dateCreated: new Date().toISOString()
     };
-
     const updatedAnnouncements = [...announcements, announcement];
     setAnnouncements(updatedAnnouncements);
-    saveToStorage('announcements', updatedAnnouncements);
+    saveAnnouncementsToFirebase(updatedAnnouncements);
     setNewAnnouncement({ title: '', content: '' });
-
     toast({
       title: "เพิ่มประกาศสำเร็จ",
       description: "ประกาศได้ถูกเพิ่มแล้ว",
@@ -148,18 +222,44 @@ const Admin = () => {
       ann.id === id ? { ...ann, isActive: !ann.isActive } : ann
     );
     setAnnouncements(updatedAnnouncements);
-    saveToStorage('announcements', updatedAnnouncements);
+    saveAnnouncementsToFirebase(updatedAnnouncements);
   };
 
   const handleDeleteAnnouncement = (id: string) => {
     const updatedAnnouncements = announcements.filter(ann => ann.id !== id);
     setAnnouncements(updatedAnnouncements);
-    saveToStorage('announcements', updatedAnnouncements);
-
+    saveAnnouncementsToFirebase(updatedAnnouncements);
     toast({
       title: "ลบประกาศสำเร็จ",
       description: "ประกาศได้ถูกลบแล้ว",
     });
+  };
+
+  // โหลดปุ่ม adminButtons จาก Firebase
+  useEffect(() => {
+    const fetchAdminButtons = async () => {
+      try {
+        const res = await fetch(`${FIREBASE_URL}/adminButtons.json`);
+        const data = await res.json();
+        if (data) setAdminButtons(Object.values(data));
+      } catch {}
+    };
+    fetchAdminButtons();
+  }, []);
+
+  const handleAddAdminButton = (btn: { id: string; label: string; url: string; icon: string }) => {
+    const updated = [...adminButtons, btn];
+    setAdminButtons(updated);
+    saveAdminButtonsToFirebase(updated);
+  };
+  const handleRemoveAdminButton = (id: string) => {
+    const updated = adminButtons.filter(b => b.id !== id);
+    setAdminButtons(updated);
+    saveAdminButtonsToFirebase(updated);
+  };
+  const handleUpdateAllAdminButtons = (buttons: typeof adminButtons) => {
+    setAdminButtons(buttons);
+    saveAdminButtonsToFirebase(buttons);
   };
 
   if (!isLoggedIn) {
@@ -180,12 +280,15 @@ const Admin = () => {
                 </Button>
               </Link>
               <div>
-                <h1 className="text-2xl font-bold text-gray-800">ระบบจัดการแอดมิน</h1>
+                <h1 className="text-2xl font-bold text-gray-800">PANEL FREE</h1>
                 <p className="text-sm text-gray-600">จัดการของแจก ประกาศ หมวดหมู่ และโน๊ตส่วนตัว</p>
               </div>
             </div>
             <Button 
-              onClick={() => setIsLoggedIn(false)}
+              onClick={() => {
+                localStorage.removeItem('isAdmin');
+                setIsLoggedIn(false);
+              }}
               variant="outline"
               className="border-red-500 text-red-700 hover:bg-red-50"
             >
@@ -197,7 +300,7 @@ const Admin = () => {
 
       <main className="container mx-auto px-4 py-8">
         <Tabs defaultValue="items" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="items" className="flex items-center gap-2">
               <Package className="w-4 h-4" />
               จัดการของแจก
@@ -213,6 +316,10 @@ const Admin = () => {
             <TabsTrigger value="notes" className="flex items-center gap-2">
               <StickyNote className="w-4 h-4" />
               โน๊ตส่วนตัว
+            </TabsTrigger>
+            <TabsTrigger value="settings" className="flex items-center gap-2">
+              <span className="text-xl">⋮</span>
+              ตั้งค่าปุ่ม
             </TabsTrigger>
           </TabsList>
 
@@ -302,28 +409,20 @@ const Admin = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="ann-title">หัวข้อประกาศ</Label>
-                    <Input
-                      id="ann-title"
-                      value={newAnnouncement.title}
-                      onChange={(e) => setNewAnnouncement({...newAnnouncement, title: e.target.value})}
-                      placeholder="เช่น ประกาศสำคัญ"
-                    />
-                  </div>
+                  {/* ลบช่องกรอกหัวข้อประกาศออก */}
                   <div className="space-y-2">
                     <Label htmlFor="ann-content">เนื้อหาประกาศ</Label>
                     <Textarea
                       id="ann-content"
                       value={newAnnouncement.content}
-                      onChange={(e) => setNewAnnouncement({...newAnnouncement, content: e.target.value})}
+                      onChange={(e) => setNewAnnouncement({ ...newAnnouncement, content: e.target.value })}
                       placeholder="เขียนเนื้อหาประกาศที่ต้องการให้คนทั่วไปเห็น..."
                       className="min-h-[100px]"
                     />
                   </div>
-                  <Button 
+                  <Button
                     onClick={handleAddAnnouncement}
-                    disabled={!newAnnouncement.title.trim() || !newAnnouncement.content.trim()}
+                    disabled={!newAnnouncement.content.trim()}
                     className="w-full bg-blue-600 hover:bg-blue-700"
                   >
                     <Megaphone className="w-4 h-4 mr-2" />
@@ -406,6 +505,16 @@ const Admin = () => {
               onAddNote={handleAddNote}
               onUpdateNote={handleUpdateNote}
               onDeleteNote={handleDeleteNote}
+            />
+          </TabsContent>
+
+          {/* Admin Settings */}
+          <TabsContent value="settings">
+            <AdminSettingsTab
+              buttons={adminButtons}
+              onAddButton={handleAddAdminButton}
+              onRemoveButton={handleRemoveAdminButton}
+              onUpdateAllButtons={handleUpdateAllAdminButtons}
             />
           </TabsContent>
         </Tabs>

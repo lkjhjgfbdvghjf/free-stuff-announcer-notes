@@ -1,30 +1,19 @@
-
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Gift, Search, Settings, Sun, Moon } from 'lucide-react';
+import { Gift, Settings, Sun, Moon, Menu, User, Home, Link as LinkIcon, Star, Book, Info } from 'lucide-react';
 import ItemCard from '@/components/ItemCard';
-import AnnouncementBanner from '@/components/AnnouncementBanner';
 import { FreeItem, Announcement } from '@/types';
+import AnnouncementBanner from '@/components/AnnouncementBanner';
 
 const Index = () => {
   const [items, setItems] = useState<FreeItem[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [isDarkMode, setIsDarkMode] = useState(false);
-
-  const categories = [
-    'เสื้อผ้า',
-    'อิเล็กทรอนิกส์',
-    'หนังสือ',
-    'ของใช้ในบ้าน',
-    'ของเล่น',
-    'อาหาร',
-    'อื่นๆ'
-  ];
+  const [categories, setCategories] = useState<string[]>([]);
+  const [adminButtons, setAdminButtons] = useState<{ id: string; label: string; url: string; icon: string }[]>([]);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   // Dark mode toggle
   useEffect(() => {
@@ -47,131 +36,211 @@ const Index = () => {
     }
   };
 
-  // Load data from localStorage
-  useEffect(() => {
-    const savedItems = localStorage.getItem('freeItems');
-    const savedAnnouncements = localStorage.getItem('announcements');
-    
-    if (savedItems) {
-      setItems(JSON.parse(savedItems));
-    } else {
-      // Sample data
-      const sampleItems: FreeItem[] = [
-        {
-          id: '1',
-          title: 'เสื้อเชิ้ตสีขาว ไซส์ M',
-          description: 'เสื้อเชิ้ตสีขาวแบรนด์ดัง สภาพดีมาก ใส่แค่ 2-3 ครั้ง เหมาะสำหรับไปทำงาน',
-          category: 'เสื้อผ้า',
-          quantity: 1,
-          dateAdded: new Date().toISOString(),
-          isActive: true
-        },
-        {
-          id: '2',
-          title: 'หนังสือเรียนคณิตศาสตร์ ม.3',
-          description: 'หนังสือเรียนคณิตศาสตร์ระดับมัธยมศึกษาปีที่ 3 สภาพดี มีเขียนบางหน้า',
-          category: 'หนังสือ',
-          quantity: 3,
-          dateAdded: new Date(Date.now() - 86400000).toISOString(),
-          isActive: true
-        }
-      ];
-      setItems(sampleItems);
-      localStorage.setItem('freeItems', JSON.stringify(sampleItems));
-    }
+  // Firebase base URL
+  const FIREBASE_URL = 'https://kovfs-a8152-default-rtdb.firebaseio.com';
 
-    if (savedAnnouncements) {
-      setAnnouncements(JSON.parse(savedAnnouncements));
-    } else {
-      // Sample announcement
-      const sampleAnnouncements: Announcement[] = [
-        {
-          id: '1',
-          title: 'ยินดีต้อนรับสู่ระบบแจกของฟรี!',
-          content: 'ที่นี่คุณสามารถหาของใช้ฟรีได้ทุกวัน อย่าลืมติดต่อเจ้าของก่อนไปรับของนะครับ',
-          isActive: true,
-          dateCreated: new Date().toISOString()
-        }
-      ];
-      setAnnouncements(sampleAnnouncements);
-      localStorage.setItem('announcements', JSON.stringify(sampleAnnouncements));
-    }
+  // ดึงข้อมูลจาก Firebase
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const itemsRes = await fetch(`${FIREBASE_URL}/items.json`);
+        const itemsData = await itemsRes.json();
+        const itemsArray: FreeItem[] = itemsData ? Object.values(itemsData) : [];
+        setItems(itemsArray);
+
+        const annRes = await fetch(`${FIREBASE_URL}/announcements.json`);
+        const annData = await annRes.json();
+        const annArray: Announcement[] = annData ? Object.values(annData) : [];
+        setAnnouncements(annArray);
+      } catch (err) {
+        // fallback: ไม่พบข้อมูลหรือ error
+        setItems([]);
+        setAnnouncements([]);
+      }
+    };
+    fetchData();
   }, []);
+
+  // ดึงหมวดหมู่จาก Firebase
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const catRes = await fetch(`${FIREBASE_URL}/categories.json`);
+        const catData = await catRes.json();
+        if (Array.isArray(catData) && catData.length > 0) {
+          setCategories(catData);
+        } else {
+          setCategories([
+            'เสื้อผ้า',
+            'อิเล็กทรอนิกส์',
+            'หนังสือ',
+            'ของใช้ในบ้าน',
+            'ของเล่น',
+            'อาหาร',
+            'อื่นๆ'
+          ]);
+        }
+      } catch {
+        setCategories([
+          'เสื้อผ้า',
+          'อิเล็กทรอนิกส์',
+          'หนังสือ',
+          'ของใช้ในบ้าน',
+          'ของเล่น',
+          'อาหาร',
+          'อื่นๆ'
+        ]);
+      }
+    };
+    fetchCategories();
+  }, []);
+
+  // โหลดปุ่ม admin จาก Firebase
+  useEffect(() => {
+    const fetchAdminButtons = async () => {
+      try {
+        const res = await fetch(`${FIREBASE_URL}/adminButtons.json`);
+        const data = await res.json();
+        if (data) {
+          // รองรับทั้ง object (id เป็น key) และ array
+          const arr = Array.isArray(data) ? data : Object.values(data);
+          setAdminButtons(arr);
+        } else {
+          setAdminButtons([]);
+        }
+      } catch {
+        setAdminButtons([]);
+      }
+    };
+    fetchAdminButtons();
+    // ตรวจสอบสถานะ admin (เช่น localStorage หรือ cookie)
+    setIsAdmin(localStorage.getItem('isAdmin') === 'true');
+  }, []);
+
+  // ฟังก์ชันบันทึกข้อมูลไป Firebase (ถ้าต้องการใช้งานในอนาคต)
+  const saveItemsToFirebase = async (newItems: FreeItem[]) => {
+    await fetch(`${FIREBASE_URL}/items.json`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newItems.reduce((acc, item) => ({ ...acc, [item.id]: item }), {})),
+    });
+  };
+  const saveAnnouncementsToFirebase = async (newAnnouncements: Announcement[]) => {
+    await fetch(`${FIREBASE_URL}/announcements.json`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newAnnouncements.reduce((acc, item) => ({ ...acc, [item.id]: item }), {})),
+    });
+  };
 
   const filteredItems = items.filter(item => {
     if (!item.isActive) return false;
     
-    const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         item.description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === 'all' || item.category === selectedCategory;
     
-    return matchesSearch && matchesCategory;
+    return matchesCategory;
   });
+
+  // ฟังก์ชันสำหรับแสดงไอคอนตามชื่อ
+  const getIcon = (icon: string) => {
+    switch (icon) {
+      case 'Gift': return <Gift className="w-4 h-4 mr-2" />;
+      case 'Settings': return <Settings className="w-4 h-4 mr-2" />;
+      case 'Sun': return <Sun className="w-4 h-4 mr-2" />;
+      case 'Moon': return <Moon className="w-4 h-4 mr-2" />;
+      case 'Menu': return <Menu className="w-4 h-4 mr-2" />;
+      case 'User': return <User className="w-4 h-4 mr-2" />;
+      case 'Home': return <Home className="w-4 h-4 mr-2" />;
+      case 'Link': return <LinkIcon className="w-4 h-4 mr-2" />;
+      case 'Star': return <Star className="w-4 h-4 mr-2" />;
+      case 'Book': return <Book className="w-4 h-4 mr-2" />;
+      case 'Info': return <Info className="w-4 h-4 mr-2" />;
+      default: return null;
+    }
+  };
 
   return (
     <div className={`min-h-screen transition-colors duration-300 ${isDarkMode ? 'dark' : ''}`}>
       <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-        {/* Header */}
-        <header className="bg-white dark:bg-gray-800 shadow-md border-b-4 border-green-500 dark:border-green-400">
-          <div className="container mx-auto px-3 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="bg-gradient-to-r from-green-500 to-blue-500 p-2 rounded-full">
-                  <Gift className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h1 className="text-lg font-bold text-gray-800 dark:text-gray-100">ระบบแจกของฟรี</h1>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={toggleDarkMode}
-                  className="border-gray-300 dark:border-gray-600"
-                >
-                  {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-                </Button>
-                <Link to="/admin">
-                  <Button variant="outline" size="sm" className="border-green-500 text-green-700 hover:bg-green-50 dark:border-green-400 dark:text-green-400 dark:hover:bg-green-900">
-                    <Settings className="w-4 h-4 mr-1" />
-                    แอดมิน
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          </div>
-        </header>
-
         <main className="container mx-auto px-3 py-4">
           {/* Announcements */}
           <AnnouncementBanner announcements={announcements} />
 
-          {/* Search and Filter */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 mb-6">
-            <div className="flex flex-col gap-3">
-              <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="ค้นหาสิ่งของที่ต้องการ..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 text-sm dark:bg-gray-700 dark:text-gray-100"
-                />
+          {/* Header (แทปสีขาวด้านบน) */}
+          <header className="bg-white dark:bg-gray-800 shadow-md border-b-4 border-green-500 dark:border-green-400">
+            <div className="container mx-auto px-3 py-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <span
+                    className="text-2xl font-extrabold bg-gradient-to-r from-green-400 via-blue-500 to-purple-500 bg-clip-text text-transparent drop-shadow-md tracking-wide animate-gradient-x"
+                    style={{
+                      WebkitBackgroundClip: 'text',
+                      backgroundClip: 'text',
+                      color: 'transparent',
+                      display: 'inline-block',
+                      textShadow: '0 2px 8px rgba(80,80,80,0.10)'
+                    }}
+                  >
+                    PANEL FREE
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={toggleDarkMode}
+                    className="border-gray-300 dark:border-gray-600"
+                  >
+                    {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                  </Button>
+                  {adminButtons.length > 0 && (
+                    <div className="relative">
+                      <input type="checkbox" id="admin-menu-toggle" className="hidden peer" />
+                      <label htmlFor="admin-menu-toggle" className="cursor-pointer flex items-center justify-center w-10 h-10 rounded hover:bg-gray-100 dark:hover:bg-gray-700">
+                        <Menu className="w-6 h-6" />
+                      </label>
+                      <div className="absolute right-0 mt-2 z-50 hidden peer-checked:block bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded shadow min-w-[180px]">
+                        {adminButtons.map(btn => (
+                          <a
+                            key={btn.id}
+                            href={btn.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition"
+                          >
+                            {getIcon(btn.icon)}
+                            {btn.label}
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
-              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger className="text-sm dark:bg-gray-700 dark:text-gray-100">
-                  <SelectValue placeholder="เลือกหมวดหมู่" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">ทั้งหมด</SelectItem>
-                  {categories.map((category) => (
-                    <SelectItem key={category} value={category}>
-                      {category}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            </div>
+          </header>
+
+          {/* Search and Filter */}
+          {/* ลบช่องค้นหา และแสดงหมวดหมู่เป็นบล็อกปุ่ม */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 mb-6">
+            <div className="flex flex-wrap gap-2 justify-center">
+              {categories.map((category) => (
+                <Button
+                  key={category}
+                  variant={selectedCategory === category ? 'default' : 'outline'}
+                  className={`text-sm ${selectedCategory === category ? 'bg-green-500 text-white' : 'dark:bg-gray-700 dark:text-gray-100'}`}
+                  onClick={() => setSelectedCategory(category)}
+                >
+                  {category}
+                </Button>
+              ))}
+              <Button
+                variant={selectedCategory === 'all' ? 'default' : 'outline'}
+                className={`text-sm ${selectedCategory === 'all' ? 'bg-green-500 text-white' : 'dark:bg-gray-700 dark:text-gray-100'}`}
+                onClick={() => setSelectedCategory('all')}
+              >
+                ทั้งหมด
+              </Button>
             </div>
           </div>
 
@@ -185,7 +254,7 @@ const Index = () => {
           ) : (
             <div className="text-center py-12">
               <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 max-w-sm mx-auto">
-                <Gift className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
+                {/* ลบไอคอนกล่องของขวัญ */}
                 <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">
                   ไม่พบสิ่งของที่ค้นหา
                 </h3>
@@ -196,16 +265,6 @@ const Index = () => {
             </div>
           )}
         </main>
-
-        {/* Footer */}
-        <footer className="bg-gray-800 dark:bg-gray-900 text-white py-6 mt-12">
-          <div className="container mx-auto px-3 text-center">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <Gift className="w-5 h-5" />
-              <span className="font-semibold text-sm">ระบบแจกของฟรี</span>
-            </div>
-          </div>
-        </footer>
       </div>
     </div>
   );
