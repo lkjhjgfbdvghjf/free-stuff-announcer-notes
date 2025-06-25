@@ -5,6 +5,9 @@ import { Gift, Settings, Sun, Moon, Menu, User, Home, Link as LinkIcon, Star, Bo
 import ItemCard from '@/components/ItemCard';
 import { FreeItem, Announcement } from '@/types';
 import AnnouncementBanner from '@/components/AnnouncementBanner';
+import { fetchBorderColorFromFirebase } from '@/lib/borderColor';
+import { fetchHeaderBorderColorFromFirebase } from '@/lib/headerBorderColor';
+import { saveTitleColorToFirebase, fetchTitleColorFromFirebase } from '@/lib/titleColor';
 
 const Index = () => {
   const [items, setItems] = useState<FreeItem[]>([]);
@@ -14,6 +17,10 @@ const Index = () => {
   const [categories, setCategories] = useState<string[]>([]);
   const [adminButtons, setAdminButtons] = useState<{ id: string; label: string; url: string; icon: string }[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [borderColor, setBorderColor] = useState('border-l-green-500 dark:border-l-green-400');
+  const [headerBorderColor, setHeaderBorderColor] = useState('border-green-500 dark:border-green-400');
+  const [showAdminMenu, setShowAdminMenu] = useState(false);
+  const [titleColor, setTitleColor] = useState('from-green-400 via-blue-500 to-purple-500');
 
   // Dark mode toggle
   useEffect(() => {
@@ -117,6 +124,17 @@ const Index = () => {
     setIsAdmin(localStorage.getItem('isAdmin') === 'true');
   }, []);
 
+  // โหลดสีเส้นข้างจาก Firebase ตอน mount
+  useEffect(() => {
+    fetchBorderColorFromFirebase().then(setBorderColor);
+    fetchHeaderBorderColorFromFirebase().then(setHeaderBorderColor);
+  }, []);
+
+  // โหลดสี titleColor จาก Firebase มาใช้กับ PANEL FREE ทุกคนเห็นเหมือนกัน
+  useEffect(() => {
+    fetchTitleColorFromFirebase().then(setTitleColor);
+  }, []);
+
   // ฟังก์ชันบันทึกข้อมูลไป Firebase (ถ้าต้องการใช้งานในอนาคต)
   const saveItemsToFirebase = async (newItems: FreeItem[]) => {
     await fetch(`${FIREBASE_URL}/items.json`, {
@@ -167,12 +185,12 @@ const Index = () => {
           <AnnouncementBanner announcements={announcements} />
 
           {/* Header (แทปสีขาวด้านบน) */}
-          <header className="bg-white dark:bg-gray-800 shadow-md border-b-4 border-green-500 dark:border-green-400">
+          <header className={`bg-white dark:bg-gray-800 shadow-md border-b-4 ${headerBorderColor}`}>
             <div className="container mx-auto px-3 py-4">
               <div className="flex items-center justify-between">
                 <div>
                   <span
-                    className="text-2xl font-extrabold bg-gradient-to-r from-green-400 via-blue-500 to-purple-500 bg-clip-text text-transparent drop-shadow-md tracking-wide animate-gradient-x"
+                    className={`text-2xl font-extrabold bg-gradient-to-r ${titleColor} bg-clip-text text-transparent drop-shadow-md tracking-wide animate-gradient-x`}
                     style={{
                       WebkitBackgroundClip: 'text',
                       backgroundClip: 'text',
@@ -185,22 +203,21 @@ const Index = () => {
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={toggleDarkMode}
-                    className="border-gray-300 dark:border-gray-600"
-                  >
-                    {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-                  </Button>
-                  {adminButtons.length > 0 && (
-                    <div className="relative">
-                      <input type="checkbox" id="admin-menu-toggle" className="hidden peer" />
-                      <label htmlFor="admin-menu-toggle" className="cursor-pointer flex items-center justify-center w-10 h-10 rounded hover:bg-gray-100 dark:hover:bg-gray-700">
-                        <Menu className="w-6 h-6" />
-                      </label>
-                      <div className="absolute right-0 mt-2 z-50 hidden peer-checked:block bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded shadow min-w-[180px]">
-                        {adminButtons.map(btn => (
+                  {/* Hamburger menu for admin tools */}
+                  <div className="relative group">
+                    <button type="button" className="flex items-center justify-center w-10 h-10 rounded hover:bg-gray-100 dark:hover:bg-gray-700" onClick={() => setShowAdminMenu(v => !v)}>
+                      <Menu className="w-6 h-6" />
+                    </button>
+                    {showAdminMenu && (
+                      <div className="absolute right-0 mt-2 z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded shadow min-w-[200px] animate-fade-in">
+                        <button
+                          className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition"
+                          onClick={() => { window.location.href = '/admin'; setShowAdminMenu(false); }}
+                        >
+                          🛡️ เข้าสู่ระบบแอดมิน
+                        </button>
+                        {/* แสดงปุ่ม admin อื่นๆ เฉพาะตอนล็อกอินแล้ว */}
+                        {isAdmin && adminButtons.map(btn => (
                           <a
                             key={btn.id}
                             href={btn.url}
@@ -213,8 +230,16 @@ const Index = () => {
                           </a>
                         ))}
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={toggleDarkMode}
+                    className="border-gray-300 dark:border-gray-600"
+                  >
+                    {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                  </Button>
                 </div>
               </div>
             </div>
@@ -248,7 +273,7 @@ const Index = () => {
           {filteredItems.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredItems.map((item) => (
-                <ItemCard key={item.id} item={item} />
+                <ItemCard key={item.id} item={item} borderColor={borderColor} />
               ))}
             </div>
           ) : (

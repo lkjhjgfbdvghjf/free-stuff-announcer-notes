@@ -16,6 +16,9 @@ import CategoryManager from '@/components/CategoryManager';
 import AdminSettingsTab from '@/components/AdminSettingsTab';
 import { FreeItem, AdminNote, Announcement } from '@/types';
 import { useToast } from '@/hooks/use-toast';
+import ItemCard from '@/components/ItemCard';
+import { saveBorderColorToFirebase } from '@/lib/borderColor';
+import { saveTitleColorToFirebase } from '@/lib/titleColor';
 
 const Admin = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -38,6 +41,9 @@ const Admin = () => {
     url: string;
     icon: string;
   }[]>([]);
+  const [borderColor, setBorderColor] = useState('border-l-green-500 dark:border-l-green-400');
+  const [headerBorderColor, setHeaderBorderColor] = useState('border-green-500 dark:border-green-400');
+  const [titleColor, setTitleColor] = useState('from-green-400 via-blue-500 to-purple-500');
   const { toast } = useToast();
 
   // Firebase base URL
@@ -262,6 +268,15 @@ const Admin = () => {
     saveAdminButtonsToFirebase(buttons);
   };
 
+  // ฟังก์ชันบันทึกสี headerBorderColor ไป Firebase
+  const saveHeaderBorderColorToFirebase = async (color: string) => {
+    await fetch('https://kovfs-a8152-default-rtdb.firebaseio.com/headerBorderColor.json', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(color),
+    });
+  };
+
   if (!isLoggedIn) {
     return <AdminLogin onLogin={() => setIsLoggedIn(true)} />;
   }
@@ -269,7 +284,7 @@ const Admin = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50">
       {/* Header */}
-      <header className="bg-white shadow-md border-b-4 border-blue-500">
+      <header className={`bg-white shadow-md border-b-4 ${headerBorderColor}`}>
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -336,52 +351,84 @@ const Admin = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3 max-h-96 overflow-y-auto">
+                  {/* เพิ่มตัวเลือกสีเส้นข้าง */}
+                  <div className="mb-4">
+                    <Label htmlFor="borderColorSelect">สีเส้นข้างการ์ด:</Label>
+                    <select
+                      id="borderColorSelect"
+                      className="ml-2 border rounded px-2 py-1 text-sm"
+                      value={borderColor}
+                      onChange={e => {
+                        setBorderColor(e.target.value);
+                        saveBorderColorToFirebase(e.target.value); // save to firebase
+                      }}
+                    >
+                      <option value="border-l-green-500 dark:border-l-green-400">เขียว (ค่าเริ่มต้น)</option>
+                      <option value="border-l-blue-500 dark:border-l-blue-400">น้ำเงิน</option>
+                      <option value="border-l-red-500 dark:border-l-red-400">แดง</option>
+                      <option value="border-l-yellow-500 dark:border-l-yellow-400">เหลือง</option>
+                      <option value="border-l-purple-500 dark:border-l-purple-400">ม่วง</option>
+                      <option value="border-l-pink-500 dark:border-l-pink-400">ชมพู</option>
+                      <option value="border-l-orange-500 dark:border-l-orange-400">ส้ม</option>
+                      <option value="border-l-cyan-500 dark:border-l-cyan-400">ฟ้า</option>
+                      <option value="border-l-teal-500 dark:border-l-teal-400">เขียวอมฟ้า</option>
+                      <option value="border-l-emerald-500 dark:border-l-emerald-400">เขียวมรกต</option>
+                      <option value="border-l-gray-500 dark:border-l-gray-400">เทา</option>
+                      <option value="border-l-indigo-500 dark:border-l-indigo-400">คราม</option>
+                    </select>
+                  </div>
+                  <div className="mb-4">
+                    <Label htmlFor="headerBorderColorSelect">สีเส้นขอบล่างชื่อเว็บ:</Label>
+                    <select
+                      id="headerBorderColorSelect"
+                      className="ml-2 border rounded px-2 py-1 text-sm"
+                      value={headerBorderColor}
+                      onChange={e => {
+                        setHeaderBorderColor(e.target.value);
+                        saveHeaderBorderColorToFirebase(e.target.value);
+                      }}
+                    >
+                      <option value="border-green-500 dark:border-green-400">เขียว (ค่าเริ่มต้น)</option>
+                      <option value="border-blue-500 dark:border-blue-400">น้ำเงิน</option>
+                      <option value="border-red-500 dark:border-red-400">แดง</option>
+                      <option value="border-yellow-500 dark:border-yellow-400">เหลือง</option>
+                      <option value="border-purple-500 dark:border-purple-400">ม่วง</option>
+                      <option value="border-pink-500 dark:border-pink-400">ชมพู</option>
+                      <option value="border-orange-500 dark:border-orange-400">ส้ม</option>
+                      <option value="border-cyan-500 dark:border-cyan-400">ฟ้า</option>
+                      <option value="border-teal-500 dark:border-teal-400">เขียวอมฟ้า</option>
+                      <option value="border-emerald-500 dark:border-emerald-400">เขียวมรกต</option>
+                      <option value="border-gray-500 dark:border-gray-400">เทา</option>
+                      <option value="border-indigo-500 dark:border-indigo-400">คราม</option>
+                    </select>
+                  </div>
+                  <div className="mb-4">
+                    <Label htmlFor="titleColorSelect">สีตัวอักษร PANEL FREE:</Label>
+                    <select
+                      id="titleColorSelect"
+                      className="ml-2 border rounded px-2 py-1 text-sm"
+                      value={titleColor}
+                      onChange={e => {
+                        setTitleColor(e.target.value);
+                        saveTitleColorToFirebase(e.target.value);
+                      }}
+                    >
+                      <option value="from-green-400 via-blue-500 to-purple-500">เขียว-น้ำเงิน-ม่วง (ค่าเริ่มต้น)</option>
+                      <option value="from-pink-500 via-red-500 to-yellow-500">ชมพู-แดง-เหลือง</option>
+                      <option value="from-blue-500 via-cyan-400 to-green-400">น้ำเงิน-ฟ้า-เขียว</option>
+                      <option value="from-yellow-400 via-orange-500 to-red-500">เหลือง-ส้ม-แดง</option>
+                      <option value="from-purple-500 via-indigo-500 to-blue-500">ม่วง-คราม-น้ำเงิน</option>
+                      <option value="from-emerald-400 via-teal-400 to-cyan-400">เขียวมรกต-เขียวอมฟ้า-ฟ้า</option>
+                      <option value="from-gray-400 via-gray-600 to-gray-800">เทาเข้ม</option>
+                      <option value="from-lime-400 via-green-500 to-emerald-500">ไลม์-เขียว-มรกต</option>
+                      <option value="from-fuchsia-500 via-pink-500 to-red-500">ฟูเชีย-ชมพู-แดง</option>
+                      <option value="from-orange-400 via-yellow-400 to-lime-400">ส้ม-เหลือง-ไลม์</option>
+                      <option value="from-sky-400 via-blue-500 to-indigo-500">ฟ้า-น้ำเงิน-คราม</option>
+                      <option value="from-rose-400 via-pink-500 to-fuchsia-500">โรส-ชมพู-ฟูเชีย</option>
+                    </select>
+                  </div>
                   {items.map((item) => (
-                    <Card key={item.id} className="border-l-4 border-l-green-500">
-                      <CardContent className="p-4">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <h4 className="font-medium text-gray-800">{item.title}</h4>
-                            <p className="text-sm text-gray-600 mt-1 line-clamp-2">
-                              {item.description}
-                            </p>
-                            <div className="flex items-center gap-2 mt-2">
-                              <Badge variant="secondary">{item.category}</Badge>
-                              <Badge variant="outline">
-                                {item.isActive ? (
-                                  <div className="flex items-center gap-1">
-                                    <Eye className="w-3 h-3" />
-                                    แสดง
-                                  </div>
-                                ) : (
-                                  <div className="flex items-center gap-1">
-                                    <EyeOff className="w-3 h-3" />
-                                    ซ่อน
-                                  </div>
-                                )}
-                              </Badge>
-                            </div>
-                          </div>
-                          <div className="flex gap-1 ml-4">
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => handleToggleItemStatus(item.id)}
-                            >
-                              {item.isActive ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => handleDeleteItem(item.id)}
-                              className="text-red-600 hover:text-red-700"
-                            >
-                              <Trash2 className="w-3 h-3" />
-                            </Button>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
+                    <ItemCard key={item.id} item={item} borderColor={borderColor} />
                   ))}
                   
                   {items.length === 0 && (

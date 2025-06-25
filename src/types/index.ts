@@ -1,7 +1,8 @@
 export interface FreeItem {
   id: string;
   title: string;
-  description: string;
+  description: string; // รายละเอียดใหญ่ (ลิ้งค์)
+  subDescription?: string; // รายละเอียดย่อย (ข้อความ)
   imageUrl?: string;
   category: string;
   quantity: number;

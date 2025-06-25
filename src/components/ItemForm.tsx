@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -19,6 +18,7 @@ const ItemForm = ({ onAddItem, categories }: ItemFormProps) => {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
+    subDescription: '',
     category: '',
     quantity: 1,
     imageUrl: ''
@@ -101,6 +101,7 @@ const ItemForm = ({ onAddItem, categories }: ItemFormProps) => {
     setFormData({
       title: '',
       description: '',
+      subDescription: '',
       category: '',
       quantity: 1,
       imageUrl: ''
@@ -167,6 +168,17 @@ const ItemForm = ({ onAddItem, categories }: ItemFormProps) => {
               placeholder="อธิบายรายละเอียดของสิ่งของ สภาพ ขนาด ฯลฯ"
               className="min-h-[80px] dark:bg-gray-700 dark:text-gray-100"
               required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="subDescription" className="dark:text-gray-200">รายละเอียดเพิ่มเติม (ย่อย)</Label>
+            <Input
+              id="subDescription"
+              value={formData.subDescription}
+              onChange={(e) => setFormData({...formData, subDescription: e.target.value})}
+              placeholder="ข้อความสั้น ๆ เช่น เงื่อนไข/จุดนัดรับ ฯลฯ"
+              className="dark:bg-gray-700 dark:text-gray-100"
             />
           </div>
 

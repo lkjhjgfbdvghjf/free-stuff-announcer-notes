@@ -2,14 +2,15 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar, ExternalLink } from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
 import { FreeItem } from '@/types';
 
 interface ItemCardProps {
   item: FreeItem;
+  borderColor?: string; // tailwind class เช่น 'border-l-green-500'
 }
 
-const ItemCard = ({ item }: ItemCardProps) => {
+const ItemCard = ({ item, borderColor = 'border-l-green-500 dark:border-l-green-400' }: ItemCardProps) => {
   // Function to detect URLs in text
   const renderTextWithLinks = (text: string) => {
     const urlRegex = /(https?:\/\/[^\s]+)/g;
@@ -18,16 +19,17 @@ const ItemCard = ({ item }: ItemCardProps) => {
     return parts.map((part, index) => {
       if (urlRegex.test(part)) {
         return (
-          <Button
-            key={index}
-            variant="link"
-            size="sm"
-            className="p-0 h-auto text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 text-xs"
-            onClick={() => window.open(part, '_blank')}
-          >
-            <ExternalLink className="w-3 h-3 mr-1" />
-            ดูลิงก์
-          </Button>
+          <div key={index} className="inline-block align-middle">
+            <Button
+              variant="outline"
+              size="sm"
+              className="px-2 py-1 text-xs font-semibold border-blue-500 text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-gray-700 rounded-md shadow-sm"
+              onClick={() => window.open(part, '_blank')}
+            >
+              <ExternalLink className="w-3 h-3 mr-1 inline-block align-middle" />
+              open
+            </Button>
+          </div>
         );
       }
       return part;
@@ -35,7 +37,7 @@ const ItemCard = ({ item }: ItemCardProps) => {
   };
 
   return (
-    <Card className="h-full hover:shadow-lg transition-shadow duration-300 border-l-4 border-l-green-500 dark:border-l-green-400 dark:bg-gray-800">
+    <Card className={`h-full hover:shadow-lg transition-shadow duration-300 border-l-4 ${borderColor} dark:bg-gray-800`}>
       {/* Image Section */}
       {item.imageUrl && (
         <div className="relative h-48 overflow-hidden rounded-t-lg">
@@ -66,8 +68,11 @@ const ItemCard = ({ item }: ItemCardProps) => {
       </CardHeader>
       <CardContent className="pt-0">
         <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-          <Calendar className="w-4 h-4 text-blue-500 dark:text-blue-400" />
-          <span>{new Date(item.dateAdded).toLocaleDateString('th-TH')}</span>
+          {/* <Calendar className="w-4 h-4 text-blue-500 dark:text-blue-400" />
+          <span>{new Date(item.dateAdded).toLocaleDateString('th-TH')}</span> */}
+          <span className="italic text-xs text-gray-500 dark:text-gray-400 line-clamp-2">
+            {item.subDescription ? item.subDescription : '—'}
+          </span>
         </div>
       </CardContent>
     </Card>
