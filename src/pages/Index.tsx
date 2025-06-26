@@ -21,6 +21,7 @@ const Index = () => {
   const [headerBorderColor, setHeaderBorderColor] = useState('border-green-500 dark:border-green-400');
   const [showAdminMenu, setShowAdminMenu] = useState(false);
   const [titleColor, setTitleColor] = useState('from-green-400 via-blue-500 to-purple-500');
+  const [siteTitle, setSiteTitle] = useState('');
 
   // Dark mode toggle
   useEffect(() => {
@@ -135,6 +136,18 @@ const Index = () => {
     fetchTitleColorFromFirebase().then(setTitleColor);
   }, []);
 
+  // โหลด siteTitle จาก Firebase
+  useEffect(() => {
+    const fetchSiteTitle = async () => {
+      try {
+        const res = await fetch('https://kovfs-a8152-default-rtdb.firebaseio.com/siteTitle.json');
+        const data = await res.json();
+        if (typeof data === 'string') setSiteTitle(data);
+      } catch {}
+    };
+    fetchSiteTitle();
+  }, []);
+
   // ฟังก์ชันบันทึกข้อมูลไป Firebase (ถ้าต้องการใช้งานในอนาคต)
   const saveItemsToFirebase = async (newItems: FreeItem[]) => {
     await fetch(`${FIREBASE_URL}/items.json`, {
@@ -199,7 +212,7 @@ const Index = () => {
                       textShadow: '0 2px 8px rgba(80,80,80,0.10)'
                     }}
                   >
-                    PANEL FREE
+                    {siteTitle || 'PANEL FREE'}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -214,7 +227,7 @@ const Index = () => {
                           className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition"
                           onClick={() => { window.location.href = '/admin'; setShowAdminMenu(false); }}
                         >
-                          🛡️ เข้าสู่ระบบแอดมิน
+                          Login
                         </button>
                         {/* แสดงปุ่ม admin อื่นๆ เฉพาะตอนล็อกอินแล้ว */}
                         {isAdmin && adminButtons.map(btn => (

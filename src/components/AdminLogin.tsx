@@ -43,7 +43,7 @@ const AdminLogin = ({ onLogin }: AdminLoginProps) => {
             <Lock className="w-6 h-6 text-blue-600" />
           </div>
           <CardTitle className="text-2xl font-bold text-gray-800">
-            เข้าสู่ระบบแอดมิน
+            Login
           </CardTitle>
           <CardDescription>
             กรุณาใส่ข้อมูลเพื่อเข้าสู่ระบบจัดการ

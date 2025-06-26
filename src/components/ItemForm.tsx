@@ -12,9 +12,12 @@ import { FreeItem } from '@/types';
 interface ItemFormProps {
   onAddItem: (item: Omit<FreeItem, 'id' | 'dateAdded'>) => void;
   categories?: string[];
+  editingItem?: FreeItem | null;
+  onUpdateItem?: (item: FreeItem) => void;
+  onCancelEdit?: () => void;
 }
 
-const ItemForm = ({ onAddItem, categories }: ItemFormProps) => {
+const ItemForm = ({ onAddItem, categories, editingItem, onUpdateItem, onCancelEdit }: ItemFormProps) => {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -66,6 +69,20 @@ const ItemForm = ({ onAddItem, categories }: ItemFormProps) => {
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
+  useEffect(() => {
+    if (editingItem) {
+      setFormData({
+        title: editingItem.title,
+        description: editingItem.description,
+        subDescription: editingItem.subDescription || '',
+        category: editingItem.category,
+        quantity: editingItem.quantity || 1,
+        imageUrl: editingItem.imageUrl || ''
+      });
+      setImagePreview(editingItem.imageUrl || '');
+    }
+  }, [editingItem]);
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -87,16 +104,17 @@ const ItemForm = ({ onAddItem, categories }: ItemFormProps) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!formData.title || !formData.description || !formData.category) {
       return;
     }
-
-    onAddItem({
-      ...formData,
-      isActive: true
-    });
-
+    if (editingItem && onUpdateItem) {
+      onUpdateItem({ ...editingItem, ...formData });
+    } else {
+      onAddItem({
+        ...formData,
+        isActive: true
+      });
+    }
     // Reset form
     setFormData({
       title: '',
@@ -108,7 +126,7 @@ const ItemForm = ({ onAddItem, categories }: ItemFormProps) => {
     });
     setImageFile(null);
     setImagePreview('');
-    
+    if (onCancelEdit) onCancelEdit();
     // Reset file input
     const fileInput = document.getElementById('image-upload') as HTMLInputElement;
     if (fileInput) fileInput.value = '';
@@ -118,8 +136,14 @@ const ItemForm = ({ onAddItem, categories }: ItemFormProps) => {
     <Card className="dark:bg-gray-800">
       <CardHeader>
         <div className="flex items-center gap-2">
-          <Package className="w-5 h-5 text-green-600 dark:text-green-400" />
-          <CardTitle className="text-lg dark:text-gray-100">เพิ่มของแจกใหม่</CardTitle>
+          <CardTitle className="text-lg">
+            {editingItem ? 'แก้ไขของแจก' : 'เพิ่มของแจกใหม่'}
+          </CardTitle>
+          {editingItem && onCancelEdit && (
+            <Button size="sm" variant="outline" onClick={onCancelEdit}>
+              ยกเลิก
+            </Button>
+          )}
         </div>
         <CardDescription className="dark:text-gray-300">
           เพิ่มข้อมูลของที่ต้องการแจกให้คนทั่วไป

@@ -44,6 +44,8 @@ const Admin = () => {
   const [borderColor, setBorderColor] = useState('border-l-green-500 dark:border-l-green-400');
   const [headerBorderColor, setHeaderBorderColor] = useState('border-green-500 dark:border-green-400');
   const [titleColor, setTitleColor] = useState('from-green-400 via-blue-500 to-purple-500');
+  const [siteTitle, setSiteTitle] = useState('PANEL FREE');
+  const [editingItem, setEditingItem] = useState<FreeItem | null>(null);
   const { toast } = useToast();
 
   // Firebase base URL
@@ -277,6 +279,44 @@ const Admin = () => {
     });
   };
 
+  // Load siteTitle from Firebase
+  useEffect(() => {
+    const fetchSiteTitle = async () => {
+      try {
+        const res = await fetch(`${FIREBASE_URL}/siteTitle.json`);
+        const data = await res.json();
+        if (data) setSiteTitle(data);
+      } catch {}
+    };
+    fetchSiteTitle();
+  }, []);
+
+  // Save siteTitle to Firebase
+  const saveSiteTitleToFirebase = async (title: string) => {
+    await fetch(`${FIREBASE_URL}/siteTitle.json`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(title),
+    });
+  };
+
+  const handleEditItem = (item: FreeItem) => {
+    setEditingItem(item);
+  };
+
+  const handleUpdateItem = (updatedItem: FreeItem) => {
+    const updatedItems = items.map(item =>
+      item.id === updatedItem.id ? { ...item, ...updatedItem } : item
+    );
+    setItems(updatedItems);
+    saveItemsToFirebase(updatedItems);
+    setEditingItem(null);
+    toast({
+      title: "แก้ไขของแจกสำเร็จ",
+      description: "ข้อมูลได้ถูกบันทึกแล้ว",
+    });
+  };
+
   if (!isLoggedIn) {
     return <AdminLogin onLogin={() => setIsLoggedIn(true)} />;
   }
@@ -295,7 +335,7 @@ const Admin = () => {
                 </Button>
               </Link>
               <div>
-                <h1 className="text-2xl font-bold text-gray-800">PANEL FREE</h1>
+                <h1 className="text-2xl font-bold text-gray-800">{siteTitle}</h1>
                 <p className="text-sm text-gray-600">จัดการของแจก ประกาศ หมวดหมู่ และโน๊ตส่วนตัว</p>
               </div>
             </div>
@@ -341,7 +381,13 @@ const Admin = () => {
           {/* Items Management */}
           <TabsContent value="items" className="space-y-6">
             <div className="grid lg:grid-cols-2 gap-6">
-              <ItemForm onAddItem={handleAddItem} categories={categories} />
+              <ItemForm
+                onAddItem={handleAddItem}
+                categories={categories}
+                editingItem={editingItem}
+                onUpdateItem={handleUpdateItem}
+                onCancelEdit={() => setEditingItem(null)}
+              />
               
               <Card>
                 <CardHeader>
@@ -428,7 +474,23 @@ const Admin = () => {
                     </select>
                   </div>
                   {items.map((item) => (
-                    <ItemCard key={item.id} item={item} borderColor={borderColor} />
+                    <div key={item.id} className="relative group">
+                      <ItemCard item={item} borderColor={borderColor} />
+                      <button
+                        className="absolute top-2 right-2 z-10 bg-red-600 text-white rounded-full p-1 shadow hover:bg-red-700 transition-opacity opacity-80 group-hover:opacity-100"
+                        title="ลบ"
+                        onClick={() => handleDeleteItem(item.id)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        className="absolute top-2 right-10 z-10 bg-yellow-400 text-white rounded-full p-1 shadow hover:bg-yellow-500 transition-opacity opacity-80 group-hover:opacity-100"
+                        title="แก้ไข"
+                        onClick={() => handleEditItem(item)}
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   ))}
                   
                   {items.length === 0 && (
@@ -557,6 +619,18 @@ const Admin = () => {
 
           {/* Admin Settings */}
           <TabsContent value="settings">
+            <div className="mb-6">
+              <Label htmlFor="siteTitleInput">ชื่อเว็บไซต์ (Site Title):</Label>
+              <Input
+                id="siteTitleInput"
+                className="mt-1 max-w-xs"
+                value={siteTitle}
+                onChange={e => setSiteTitle(e.target.value)}
+                onBlur={e => saveSiteTitleToFirebase(e.target.value)}
+                placeholder="กรอกชื่อเว็บไซต์ใหม่"
+              />
+              <p className="text-xs text-gray-500 mt-1">เปลี่ยนชื่อที่จะแสดงในหน้าแรก เช่น "PANEL FREE"</p>
+            </div>
             <AdminSettingsTab
               buttons={adminButtons}
               onAddButton={handleAddAdminButton}

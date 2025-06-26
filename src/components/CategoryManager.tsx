@@ -101,7 +101,7 @@ const CategoryManager = ({ categories, onUpdateCategories }: CategoryManagerProp
               id="new-category"
               value={newCategory}
               onChange={(e) => setNewCategory(e.target.value)}
-              placeholder="เช่น อุปกรณ์กีฬา"
+              placeholder="เช่น 👕 เสื้อผ้า หรือ 🧸 ของเล่น (ใส่อิโมจิได้)"
               onKeyPress={(e) => e.key === 'Enter' && handleAddCategory()}
             />
           </div>
