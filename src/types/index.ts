@@ -8,6 +8,18 @@ export interface FreeItem {
   quantity: number;
   dateAdded: string;
   isActive: boolean;
+  // App Details (Optional)
+  publisher?: string;
+  updatedDate?: string;
+  size?: string;
+  version?: string;
+  requirements?: string;
+  downloadCount?: string; // จำนวนคนดาวน์โหลด เช่น "1M+", "500K+", "10K+"
+  appIcon?: string; // URL ของไอคอนแอป
+  rating?: number; // คะแนนเฉลี่ย (0-5)
+  ratingCount?: number; // จำนวนคนให้คะแนน
+  // Gallery Images
+  galleryImages?: string[]; // ภาพประกอบแอป
 }
 
 export interface AdminNote {

@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Package, Megaphone, StickyNote, Trash2, Edit2, Eye, EyeOff, Settings } from 'lucide-react';
+import { ArrowLeft, Package, Megaphone, StickyNote, Trash2, Edit2, Eye, EyeOff, Settings, Gift } from 'lucide-react';
 import AdminLogin from '@/components/AdminLogin';
 import ItemForm from '@/components/ItemForm';
 import AdminNotes from '@/components/AdminNotes';
@@ -45,6 +45,9 @@ const Admin = () => {
   const [headerBorderColor, setHeaderBorderColor] = useState('border-green-500 dark:border-green-400');
   const [titleColor, setTitleColor] = useState('from-green-400 via-blue-500 to-purple-500');
   const [siteTitle, setSiteTitle] = useState('PANEL FREE');
+  const [siteSubtitle, setSiteSubtitle] = useState('แจกของฟรี ทุกวัน ไม่มีค่าใช้จ่าย');
+  const [siteLogo, setSiteLogo] = useState('');
+  const [siteLogoType, setSiteLogoType] = useState<'icon' | 'image'>('icon');
   const [editingItem, setEditingItem] = useState<FreeItem | null>(null);
   const { toast } = useToast();
 
@@ -63,6 +66,8 @@ const Admin = () => {
         const annData = await annRes.json();
         const catRes = await fetch(`${FIREBASE_URL}/categories.json`);
         const catData = await catRes.json();
+        const settingsRes = await fetch(`${FIREBASE_URL}/siteSettings.json`);
+        const settingsData = await settingsRes.json();
 
         const itemsArray: FreeItem[] = itemsData ? Object.values(itemsData) : [];
         setItems(itemsArray);
@@ -74,6 +79,14 @@ const Admin = () => {
         setAnnouncements(annArray);
 
         setCategories(catData || categories);
+        
+        // โหลดการตั้งค่าเว็บไซต์
+        if (settingsData) {
+          setSiteTitle(settingsData.siteTitle || 'PANEL FREE');
+          setSiteSubtitle(settingsData.siteSubtitle || 'แจกของฟรี ทุกวัน ไม่มีค่าใช้จ่าย');
+          setSiteLogo(settingsData.siteLogo || '');
+          setSiteLogoType(settingsData.siteLogoType || 'icon');
+        }
       } catch (err) {
         setItems([]);
         setNotes([]);
@@ -119,6 +132,24 @@ const Admin = () => {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(buttons.reduce((acc, b) => ({ ...acc, [b.id]: b }), {})),
+    });
+  };
+
+  const saveSiteSettingsToFirebase = async () => {
+    const settings = {
+      siteTitle,
+      siteSubtitle,
+      siteLogo,
+      siteLogoType
+    };
+    await fetch(`${FIREBASE_URL}/siteSettings.json`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(settings),
+    });
+    toast({
+      title: "บันทึกสำเร็จ",
+      description: "การตั้งค่าโลโก้เว็บไซต์ได้รับการบันทึกแล้ว",
     });
   };
 
@@ -291,12 +322,33 @@ const Admin = () => {
     fetchSiteTitle();
   }, []);
 
+  // Load siteSubtitle from Firebase
+  useEffect(() => {
+    const fetchSiteSubtitle = async () => {
+      try {
+        const res = await fetch(`${FIREBASE_URL}/siteSubtitle.json`);
+        const data = await res.json();
+        if (data) setSiteSubtitle(data);
+      } catch {}
+    };
+    fetchSiteSubtitle();
+  }, []);
+
   // Save siteTitle to Firebase
   const saveSiteTitleToFirebase = async (title: string) => {
     await fetch(`${FIREBASE_URL}/siteTitle.json`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(title),
+    });
+  };
+
+  // Save siteSubtitle to Firebase
+  const saveSiteSubtitleToFirebase = async (subtitle: string) => {
+    await fetch(`${FIREBASE_URL}/siteSubtitle.json`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(subtitle),
     });
   };
 
@@ -631,6 +683,118 @@ const Admin = () => {
               />
               <p className="text-xs text-gray-500 mt-1">เปลี่ยนชื่อที่จะแสดงในหน้าแรก เช่น "PANEL FREE"</p>
             </div>
+            
+            <div className="mb-6">
+              <Label htmlFor="siteSubtitleInput">คำอธิบายใต้ชื่อเว็บไซต์:</Label>
+              <Input
+                id="siteSubtitleInput"
+                className="mt-1 max-w-md"
+                value={siteSubtitle}
+                onChange={e => setSiteSubtitle(e.target.value)}
+                onBlur={e => saveSiteSubtitleToFirebase(e.target.value)}
+                placeholder="กรอกคำอธิบายใต้ชื่อเว็บไซต์"
+              />
+              <p className="text-xs text-gray-500 mt-1">เปลี่ยนข้อความที่แสดงใต้ชื่อเว็บไซต์ เช่น "แจกของฟรี ทุกวัน ไม่มีค่าใช้จ่าย"</p>
+            </div>
+
+            {/* Site Logo Settings */}
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Settings className="w-5 h-5" />
+                  การตั้งค่าโลโก้เว็บไซต์
+                </CardTitle>
+                <CardDescription>
+                  จัดการโลโก้และไอคอนที่แสดงในหัวข้อเว็บไซต์
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label htmlFor="logoType">ประเภทโลโก้:</Label>
+                  <div className="flex items-center gap-4 mt-2">
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="logoType"
+                        value="icon"
+                        checked={siteLogoType === 'icon'}
+                        onChange={(e) => setSiteLogoType(e.target.value as 'icon' | 'image')}
+                        className="w-4 h-4 text-blue-600"
+                      />
+                      ใช้ไอคอน (Icon)
+                    </label>
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="logoType"
+                        value="image"
+                        checked={siteLogoType === 'image'}
+                        onChange={(e) => setSiteLogoType(e.target.value as 'icon' | 'image')}
+                        className="w-4 h-4 text-blue-600"
+                      />
+                      ใช้รูปภาพ (Image URL)
+                    </label>
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="siteLogoInput">
+                    {siteLogoType === 'icon' ? 'ชื่อไอคอน (Lucide Icon):' : 'URL รูปภาพโลโก้:'}
+                  </Label>
+                  <Input
+                    id="siteLogoInput"
+                    className="mt-1"
+                    value={siteLogo}
+                    onChange={(e) => setSiteLogo(e.target.value)}
+                    placeholder={siteLogoType === 'icon' ? 'เช่น Gift, Package, Star' : 'https://example.com/logo.png'}
+                  />
+                  {siteLogoType === 'icon' && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      ใส่ชื่อไอคอนจาก Lucide (เช่น Gift, Package, Star, Heart) ปล่าวว่างไว้หากต้องการใช้ Gift เป็นค่าเริ่มต้น
+                    </p>
+                  )}
+                  {siteLogoType === 'image' && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      ใส่ URL ของรูปภาพโลโก้ ขนาดที่แนะนำ 40x40 พิกเซล
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-4">
+                  <Button onClick={saveSiteSettingsToFirebase} className="bg-green-500 hover:bg-green-600">
+                    บันทึกการตั้งค่าโลโก้
+                  </Button>
+                  
+                  {/* Logo Preview */}
+                  <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-700 px-3 py-2 rounded-lg">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">ตัวอย่าง:</span>
+                    <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+                      {siteLogoType === 'image' && siteLogo ? (
+                        <img 
+                          src={siteLogo} 
+                          alt="Logo" 
+                          className="w-full h-full object-cover rounded-lg"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                            const parent = e.currentTarget.parentElement;
+                            if (parent) {
+                              parent.innerHTML = '<svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9V7L15 1H9V3H13.5L19 8.5V9H21ZM12 7.5C12.8 7.5 13.5 8.2 13.5 9S12.8 10.5 12 10.5 10.5 9.8 10.5 9 11.2 7.5 12 7.5ZM6 12H18V14H6V12ZM6 16H18V18H6V16ZM6 20H18V22H6V20Z"/></svg>';
+                            }
+                          }}
+                        />
+                      ) : (
+                        <Gift className="w-5 h-5 text-white" />
+                      )}
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-sm font-semibold">{siteTitle}</span>
+                      <span className="text-xs text-gray-500">{siteSubtitle}</span>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             <AdminSettingsTab
               buttons={adminButtons}
               onAddButton={handleAddAdminButton}
