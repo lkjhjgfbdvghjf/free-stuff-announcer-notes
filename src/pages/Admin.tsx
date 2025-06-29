@@ -8,12 +8,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Package, Megaphone, StickyNote, Trash2, Edit2, Eye, EyeOff, Settings, Gift } from 'lucide-react';
+import { ArrowLeft, Package, Megaphone, StickyNote, Trash2, Edit2, Eye, EyeOff, Settings, Gift, Lock } from 'lucide-react';
 import AdminLogin from '@/components/AdminLogin';
 import ItemForm from '@/components/ItemForm';
 import AdminNotes from '@/components/AdminNotes';
 import CategoryManager from '@/components/CategoryManager';
 import AdminSettingsTab from '@/components/AdminSettingsTab';
+import ChangePasswordForm from '@/components/ChangePasswordForm';
+import AdManager from '@/components/AdManager';
 import { FreeItem, AdminNote, Announcement } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import ItemCard from '@/components/ItemCard';
@@ -407,26 +409,41 @@ const Admin = () => {
 
       <main className="container mx-auto px-4 py-8">
         <Tabs defaultValue="items" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="items" className="flex items-center gap-2">
-              <Package className="w-4 h-4" />
-              จัดการของแจก
+          <TabsList className="grid w-full grid-cols-3 md:grid-cols-7">
+            <TabsTrigger value="items" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
+              <Package className="w-3 h-3 md:w-4 md:h-4" />
+              <span className="hidden sm:inline">จัดการของแจก</span>
+              <span className="sm:hidden">ของแจก</span>
             </TabsTrigger>
-            <TabsTrigger value="announcements" className="flex items-center gap-2">
-              <Megaphone className="w-4 h-4" />
-              ประกาศ
+            <TabsTrigger value="announcements" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
+              <Megaphone className="w-3 h-3 md:w-4 md:h-4" />
+              <span className="hidden sm:inline">ประกาศ</span>
+              <span className="sm:hidden">ประกาศ</span>
             </TabsTrigger>
-            <TabsTrigger value="categories" className="flex items-center gap-2">
-              <Settings className="w-4 h-4" />
-              หมวดหมู่
+            <TabsTrigger value="ads" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
+              <Gift className="w-3 h-3 md:w-4 md:h-4" />
+              <span className="hidden sm:inline">โฆษณา</span>
+              <span className="sm:hidden">โฆษณา</span>
             </TabsTrigger>
-            <TabsTrigger value="notes" className="flex items-center gap-2">
-              <StickyNote className="w-4 h-4" />
-              โน๊ตส่วนตัว
+            <TabsTrigger value="categories" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
+              <Settings className="w-3 h-3 md:w-4 md:h-4" />
+              <span className="hidden sm:inline">หมวดหมู่</span>
+              <span className="sm:hidden">หมวด</span>
             </TabsTrigger>
-            <TabsTrigger value="settings" className="flex items-center gap-2">
-              <span className="text-xl">⋮</span>
-              ตั้งค่าปุ่ม
+            <TabsTrigger value="notes" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
+              <StickyNote className="w-3 h-3 md:w-4 md:h-4" />
+              <span className="hidden sm:inline">โน๊ตส่วนตัว</span>
+              <span className="sm:hidden">โน๊ต</span>
+            </TabsTrigger>
+            <TabsTrigger value="settings" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
+              <span className="text-lg md:text-xl">⋮</span>
+              <span className="hidden sm:inline">ตั้งค่าปุ่ม</span>
+              <span className="sm:hidden">ตั้งค่า</span>
+            </TabsTrigger>
+            <TabsTrigger value="password" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
+              <Lock className="w-3 h-3 md:w-4 md:h-4" />
+              <span className="hidden sm:inline">เปลี่ยนรหัส</span>
+              <span className="sm:hidden">รหัส</span>
             </TabsTrigger>
           </TabsList>
 
@@ -651,6 +668,11 @@ const Admin = () => {
             </div>
           </TabsContent>
 
+          {/* Ad Banner Management */}
+          <TabsContent value="ads">
+            <AdManager />
+          </TabsContent>
+
           {/* Category Management */}
           <TabsContent value="categories">
             <CategoryManager 
@@ -801,6 +823,11 @@ const Admin = () => {
               onRemoveButton={handleRemoveAdminButton}
               onUpdateAllButtons={handleUpdateAllAdminButtons}
             />
+          </TabsContent>
+
+          {/* Change Password */}
+          <TabsContent value="password">
+            <ChangePasswordForm />
           </TabsContent>
         </Tabs>
       </main>

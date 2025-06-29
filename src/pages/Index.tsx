@@ -3,8 +3,10 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Gift, Settings, Sun, Moon, Menu, User, Home, Link as LinkIcon, Star, Book, Info, Users } from 'lucide-react';
 import ItemCard from '@/components/ItemCard';
-import { FreeItem, Announcement } from '@/types';
+import { FreeItem, Announcement, AdBannerData } from '@/types';
 import AnnouncementBanner from '@/components/AnnouncementBanner';
+import AdBanner from '@/components/AdBanner';
+import HamburgerMenu from '@/components/HamburgerMenu';
 import { fetchBorderColorFromFirebase } from '@/lib/borderColor';
 import { fetchHeaderBorderColorFromFirebase } from '@/lib/headerBorderColor';
 import { saveTitleColorToFirebase, fetchTitleColorFromFirebase } from '@/lib/titleColor';
@@ -12,6 +14,7 @@ import { saveTitleColorToFirebase, fetchTitleColorFromFirebase } from '@/lib/tit
 const Index = () => {
   const [items, setItems] = useState<FreeItem[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [adData, setAdData] = useState<AdBannerData | null>(null);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [categories, setCategories] = useState<string[]>([]);
@@ -68,6 +71,17 @@ const Index = () => {
         const annData = await annRes.json();
         const annArray: Announcement[] = annData ? Object.values(annData) : [];
         setAnnouncements(annArray);
+
+        // โหลดข้อมูลโฆษณาจาก localStorage
+        const savedAdData = localStorage.getItem('adBannerData');
+        if (savedAdData) {
+          try {
+            const parsedAdData = JSON.parse(savedAdData);
+            setAdData(parsedAdData);
+          } catch (error) {
+            console.error('Error parsing ad data:', error);
+          }
+        }
 
         // Fetch view count
         const viewCountResponse = await fetch(`${FIREBASE_URL}/viewCount.json`);
@@ -219,24 +233,6 @@ const Index = () => {
     return matchesCategory;
   });
 
-  // ฟังก์ชันสำหรับแสดงไอคอนตามชื่อ
-  const getIcon = (icon: string) => {
-    switch (icon) {
-      case 'Gift': return <Gift className="w-4 h-4 mr-2" />;
-      case 'Settings': return <Settings className="w-4 h-4 mr-2" />;
-      case 'Sun': return <Sun className="w-4 h-4 mr-2" />;
-      case 'Moon': return <Moon className="w-4 h-4 mr-2" />;
-      case 'Menu': return <Menu className="w-4 h-4 mr-2" />;
-      case 'User': return <User className="w-4 h-4 mr-2" />;
-      case 'Home': return <Home className="w-4 h-4 mr-2" />;
-      case 'Link': return <LinkIcon className="w-4 h-4 mr-2" />;
-      case 'Star': return <Star className="w-4 h-4 mr-2" />;
-      case 'Book': return <Book className="w-4 h-4 mr-2" />;
-      case 'Info': return <Info className="w-4 h-4 mr-2" />;
-      default: return null;
-    }
-  };
-
   // Update document title with view count
   useEffect(() => {
     if (viewCount > 0) {
@@ -262,6 +258,9 @@ const Index = () => {
   return (
     <div className={`min-h-screen transition-colors duration-300 ${isDarkMode ? 'dark' : ''}`}>
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-slate-900 dark:to-indigo-950">
+        {/* Ad Banner */}
+        <AdBanner adData={adData} />
+        
         <main className="container mx-auto px-4 py-6 max-w-7xl">
           {/* Announcements */}
           <AnnouncementBanner announcements={announcements} />
@@ -327,42 +326,15 @@ const Index = () => {
                         </div>
                       )}
                       
-                      {/* Hamburger menu for admin tools */}
-                      <div className="relative group">
-                        <button 
-                          type="button" 
-                          className="flex items-center justify-center w-12 h-12 rounded-xl bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-300 shadow-md hover:shadow-lg" 
-                          onClick={() => setShowAdminMenu(v => !v)}
-                        >
-                          <Menu className="w-5 h-5 text-gray-700 dark:text-gray-300" />
-                        </button>
-                        {showAdminMenu && (
-                          <div className="absolute right-0 mt-3 z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-2xl min-w-[220px] overflow-hidden animate-fade-in">
-                            <div className="p-2">
-                              <button
-                                className="block w-full text-left px-4 py-3 text-sm text-gray-700 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors duration-200 font-medium"
-                                onClick={() => { window.location.href = '/admin'; setShowAdminMenu(false); }}
-                              >
-                                <User className="w-4 h-4 mr-3 inline-block" />
-                                เข้าสู่ระบบ Admin
-                              </button>
-                              {/* แสดงปุ่ม admin อื่นๆ เฉพาะตอนล็อกอินแล้ว */}
-                              {isAdmin && adminButtons.map(btn => (
-                                <a
-                                  key={btn.id}
-                                  href={btn.url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="flex items-center px-4 py-3 text-sm text-gray-700 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors duration-200 font-medium"
-                                >
-                                  {getIcon(btn.icon)}
-                                  {btn.label}
-                                </a>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
+                      {/* Hamburger menu button */}
+                      <button 
+                        type="button" 
+                        className="flex items-center justify-center w-12 h-12 rounded-xl bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-300 shadow-md hover:shadow-lg" 
+                        onClick={() => setShowAdminMenu(true)}
+                      >
+                        <Menu className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+                      </button>
+                      
                       <Button
                         variant="outline"
                         size="sm"
@@ -445,6 +417,17 @@ const Index = () => {
             </div>
           )}
         </main>
+        
+        {/* Hamburger Menu */}
+        <HamburgerMenu
+          isOpen={showAdminMenu}
+          onClose={() => setShowAdminMenu(false)}
+          onAdminClick={() => window.location.href = '/admin'}
+          adminButtons={adminButtons}
+          isAdmin={isAdmin}
+          isDarkMode={isDarkMode}
+          onToggleDarkMode={toggleDarkMode}
+        />
       </div>
     </div>
   );

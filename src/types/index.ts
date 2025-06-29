@@ -36,3 +36,12 @@ export interface Announcement {
   isActive: boolean;
   dateCreated: string;
 }
+
+export interface AdBannerData {
+  id: string;
+  title: string;
+  content: string;
+  imageUrl?: string;
+  isActive: boolean;
+  dateCreated: string;
+}

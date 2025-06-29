@@ -15,11 +15,22 @@ const AdminLogin = ({ onLogin }: AdminLoginProps) => {
   const [password, setPassword] = useState('');
   const { toast } = useToast();
 
+  const getStoredCredentials = () => {
+    // Get credentials from localStorage or use default
+    const savedCredentials = localStorage.getItem('adminCredentials');
+    if (savedCredentials) {
+      return JSON.parse(savedCredentials);
+    }
+    return { username: 'raze', password: '11223344' };
+  };
+
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Simple admin login - in real app, this would be secure authentication
-    if (username === 'raze' && password === '11223344') {
+    const credentials = getStoredCredentials();
+    
+    // Check against stored credentials
+    if (username === credentials.username && password === credentials.password) {
       localStorage.setItem('isAdmin', 'true');
       onLogin();
       toast({
